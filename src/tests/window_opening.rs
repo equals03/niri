@@ -403,6 +403,7 @@ fn target_size() {
     // * want fullscreen
     // * open-fullscreen
     // * open-maximized
+    // * open-maximized-if-alone
     // * open-floating
     // * default-column-width
     // * border
@@ -418,6 +419,7 @@ fn target_size() {
         WantFullscreen::AfterInitial(None),
     ];
     let open_maximized = [None, Some("true")];
+    let open_maximized_if_alone = [None, Some("true")];
     let open_floating = [None, Some("true")];
     let default_column_width = [
         None,
@@ -438,12 +440,14 @@ fn target_size() {
     for fs in open_fullscreen {
         for wfs in want_fullscreen {
             for om in open_maximized {
-                for of in open_floating {
-                    for dw in default_column_width {
-                        for dh in default_window_height {
-                            for b in border {
-                                for t in tabbed {
-                                    powerset.push((fs, wfs, om, of, dw, dh, b, t));
+                for omia in open_maximized_if_alone {
+                    for of in open_floating {
+                        for dw in default_column_width {
+                            for dh in default_window_height {
+                                for b in border {
+                                    for t in tabbed {
+                                        powerset.push((fs, wfs, om, omia, of, dw, dh, b, t));
+                                    }
                                 }
                             }
                         }
@@ -455,8 +459,8 @@ fn target_size() {
 
     powerset
         .into_par_iter()
-        .for_each(|(fs, wfs, om, of, dw, dh, b, t)| {
-            check_target_size(fs, wfs, om, of, dw, dh, b, t);
+        .for_each(|(fs, wfs, om, omia, of, dw, dh, b, t)| {
+            check_target_size(fs, wfs, om, omia, of, dw, dh, b, t);
         });
 }
 
@@ -465,6 +469,7 @@ fn check_target_size(
     open_fullscreen: Option<&str>,
     want_fullscreen: WantFullscreen,
     open_maximized: Option<&str>,
+    open_maximized_if_alone: Option<&str>,
     open_floating: Option<&str>,
     default_width: Option<DefaultSize>,
     default_height: Option<DefaultSize>,
@@ -492,6 +497,13 @@ window-rule {
 
         let x = if x == "true" { "T" } else { "F" };
         snapshot_suffix.push(format!("om{x}"));
+    }
+
+    if let Some(x) = open_maximized_if_alone {
+        writeln!(config, "    open-maximized-if-alone {x}").unwrap();
+
+        let x = if x == "true" { "T" } else { "F" };
+        snapshot_suffix.push(format!("omia{x}"));
     }
 
     if let Some(x) = open_floating {
